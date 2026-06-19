@@ -1,30 +1,38 @@
 name: Build Android APK
 on: [push]
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - name: Install dependencies
+
+      - name: Install Dependencies
         run: |
           npm install
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-      - name: Generate Project
+          npm install -g @capacitor/cli
+          npm install @capacitor/core @capacitor/android
+
+      - name: Create Capacitor Config
         run: |
           echo '{"appId": "com.landos.pad", "appName": "LandosPad", "webDir": "www", "bundledWebRuntime": false}' > capacitor.config.json
-          npx cap add android
-      - name: Build APK
+
+      - name: Build Android Project
         run: |
+          npx cap add android --no-interactive
+          npx cap sync
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          ./gradlew assembleDebug
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
-          
+          path: android/app/build/outputs/apk/debug/app-deb
+          ug.apk
