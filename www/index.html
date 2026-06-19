@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PO-Custom Ultra Tower</title>
+    <style>
+        * { box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+        body { 
+            margin: 0; 
+            background: #0b0b0d; 
+            color: #d4d4d8;
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            height: 100vh; 
+            overflow: hidden; /* Lock viewport tightly to prevent body scrolling */
+            font-family: monospace; 
+        }
+
+        /* Enforced Elongated Vertical Hardware Chassis Container */
+        .hardware-chassis {
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: #141417;
+            border-left: 6px solid #27272a;
+            border-right: 6px solid #27272a;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 14px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+        }
+
+        .lcd-display {
+            background: #7d967f;
+            color: #122013;
+            border: 4px solid #1f1f23;
+            border-radius: 6px;
+            padding: 8px 12px;
+            height: 95px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: inset 0 0 12px rgba(0,0,0,0.4);
+        }
+        .lcd-left { display: flex; flex-direction: column; gap: 3px; }
+        .lcd-title { font-weight: bold; font-size: 1rem; letter-spacing: -0.03em; text-transform: uppercase; }
+        .lcd-sub { font-size: 0.7rem; font-weight: bold; opacity: 0.9; }
+        
+        .lcd-graph { display: flex; align-items: flex-end; gap: 4px; height: 55px; }
+        .bar { width: 7px; background: #122013; height: 10%; transition: height 0.1s ease; }
+
+        /* Mechanical Dial Knobs Platform */
+        .knobs-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: #1f1f23;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid #27272a;
+        }
+        .knob-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #a1a1aa;
+        }
+        .rotary-knob {
+            width: 48px;
+            height: 48px;
+            background: #333338;
+            border: 4px solid #44444a;
+            border-radius: 50%;
+            position: relative;
+            cursor: ns-resize;
+            box-shadow: 0 4px #09090b, inset 0 2px rgba(255,255,255,0.1);
+            transform: rotate(-135deg);
+            touch-action: none;
+        }
+        .rotary-knob::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 50%;
+            width: 4px;
+            height: 14px;
+            background: #f43f5e;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        /* Massive Engine Selector Hub */
+        .engine-tray {
+            width: 100%;
+        }
+        select {
+            width: 100%;
+            background: #1f1f23;
+            color: #22d3ee;
+            border: 2px solid #3f3f46;
+            padding: 10px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            font-weight: bold;
+            outline: none;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        /* Strictly Elongated Vertical Grid */
+        .grid { 
+            display: grid; 
+            grid-template-columns: repeat(4, 1fr); 
+            gap: 14px; 
+            width: 100%;
+            flex-grow: 1;
+            margin-top: 14px;
+            margin-bottom: 8px;
+            touch-action: none;
+        }
+        .pad { 
+            background: #19191c; 
+            border: 3px solid #3f3f46; 
+            border-radius: 16px; /* Pill/oval mechanical hybrid buttons */
+            display: flex; 
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center; 
+            color: #e4e4e7; 
+            font-weight: bold; 
+            cursor: pointer; 
+            -webkit-tap-highlight-color: transparent;
+            box-shadow: 0 5px #09090b, inset 0 2px rgba(255,255,255,0.05);
+            transition: transform 0.05s;
+        }
+        .pad:active, .pad.active-play {
+            background: #22d3ee !important;
+            color: #0b0b0d !important;
+            transform: translateY(4px);
+            box-shadow: 0 1px #09090b;
+        }
+        .pad-num { font-size: 1.2rem; letter-spacing: -0.05em; }
+        .pad-label { font-size: 0.55rem; font-weight: normal; margin-top: 4px; text-transform: uppercase; opacity: 0.7; }
+
+        /* Hardware Matrix Color Zoning */
+        .pad.col-amber { border-color: #f59e0b; }
+        .pad.col-violet { border-color: #8b5cf6; }
+        .pad.col-rose { border-color: #f43f5e; }
+        .pad.col-cyan { border-color: #06b6d4; }
+    </style>
+</head>
+<body>
+
+<div class="hardware-chassis">
+    <div class="lcd-display">
+        <div class="lcd-left">
+            <div class="lcd-title" id="lcdKitName">PO-808 CLASSIC</div>
+            <div class="lcd-sub" id="lcdStatus">SYS_STATUS: READY</div>
+            <div class="lcd-sub" id="lcdValueRead">BPM: 120 | MIX DRIVE: 0%</div>
+        </div>
+        <div class="lcd-graph">
+            <div class="bar" id="b1"></div>
+            <div class="bar" id="b2"></div>
+            <div class="bar" id="b3"></div>
+            <div class="bar" id="b4"></div>
+            <div class="bar" id="b5"></div>
+        </div>
+    </div>
+
+    <div class="knobs-container">
+        <div class="knob-wrapper">
+            <span>KNOB A: TIME VARIATION</span>
+            <div class="rotary-knob" id="knobA" data-type="bpm"></div>
+        </div>
+        <div class="knob-wrapper">
+            <span>KNOB B: DRIVE SATURATION</span>
+            <div class="rotary-knob" id="knobB" data-type="fx"></div>
+        </div>
+    </div>
+    
+    <div class="engine-tray">
+        <select id="kitSelect">
+            <option value="808">01 » PO-808 HIP HOP RETRO</option>
+            <option value="909">02 » PO-909 TECHNO ENGINE</option>
+            <option value="acoustic">03 » PO-STUDIO ACOUSTIC KIT</option>
+            <option value="industrial">04 » PO-INDUSTRIAL DIST WAVE</option>
+            <option value="chiptune">05 » PO-8BIT ARCADE SQUARE</option>
+            <option value="synthwave">06 » PO-NEON SYNTH RUNNER</option>
+            <option value="ambient">07 » PO-DEEP TEXTURE SPACE</option>
+            <option value="glitch">08 » PO-LOFI GLITCH CHOP</option>
+            <option value="metallic">09 » PO-METAL METALLIC ANVIL</option>
+            <option value="tribal">10 » PO-AFRO TRIBAL PERC</option>
+            <option value="sublow">11 » PO-DEEP 808 SUB BASS</option>
+            <option value="scifi">12 » PO-COSMIC ALIEN BEAM</option>
+        </select>
+    </div>
+
+    <div class="grid" id="padGrid">
+        <div class="pad col-amber" data-id="1" data-pitch="C5"><span class="pad-num">01</span><span class="pad-label">High FX</span></div>
+        <div class="pad col-amber" data-id="2" data-pitch="A4"><span class="pad-num">02</span><span class="pad-label">Rim Click</span></div>
+        <div class="pad col-amber" data-id="3" data-pitch="F4"><span class="pad-num">03</span><span class="pad-label">Clave Accent</span></div>
+        <div class="pad col-amber" data-id="4" data-pitch="E4"><span class="pad-num">04</span><span class="pad-label">Cowbell</span></div>
+
+        <div class="pad col-violet" data-id="5" data-pitch="D4"><span class="pad-num">05</span><span class="pad-label">High Conga</span></div>
+        <div class="pad col-violet" data-id="6" data-pitch="C4"><span class="pad-num">06</span><span class="pad-label">Mid Tom</span></div>
+        <div class="pad col-violet" data-id="7" data-pitch="B3"><span class="pad-num">07</span><span class="pad-label">Low Tom</span></div>
+        <div class="pad col-violet" data-id="8" data-pitch="A3"><span class="pad-num">08</span><span class="pad-label">Crash Shot</span></div>
+
+        <div class="pad col-rose" data-id="9" data-pitch="G3"><span class="pad-num">09</span><span class="pad-label">Open Hat</span></div>
+        <div class="pad col-rose" data-id="10" data-pitch="F3"><span class="pad-num">10</span><span class="pad-label">Close Hat</span></div>
+        <div class="pad col-rose" data-id="11" data-pitch="E3"><span class="pad-num">11</span><span class="pad-label">Shaker Tick</span></div>
+        <div class="pad col-rose" data-id="12" data-pitch="D3"><span class="pad-num">12</span><span class="pad-label">Hand Clap</span></div>
+
+        <div class="pad col-cyan" data-id="13" data-pitch="C3"><span class="pad-num">13</span><span class="pad-label">Snare Sharp</span></div>
+        <div class="pad col-cyan" data-id="14" data-pitch="B2"><span class="pad-num">14</span><span class="pad-label">Snare Fat</span></div>
+        <div class="pad col-cyan" data-id="15" data-pitch="A2"><span class="pad-num">15</span><span class="pad-label">Kick Punch</span></div>
+        <div class="pad col-cyan" data-id="16" data-pitch="G2"><span class="pad-num">16</span><span class="pad-label">Sub Sub</span></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+<script>
+    let activeEngine = "808";
+    let bpm = 120;
+    let mainFxDrive = 0;
+
+    // Master Signal Chain Routing Modules
+    const distortionNode = new Tone.Distortion(0).toDestination();
+    const filterUnit = new Tone.Filter(1200, "lowpass").connect(distortionNode);
+    
+    // Multi-synthesis modeling banks to handle different kit styles natively
+    const drumKick = new Tone.MembraneSynth({ envelope: { attack: 0.001, decay: 0.22, sustain: 0 } }).connect(filterUnit);
+    const heavySnare = new Tone.NoiseSynth({ envelope: { attack: 0.002, decay: 0.12, sustain: 0 } }).connect(distortionNode);
+    const hihatCymbal = new Tone.MetalSynth({ envelope: { attack: 0.001, decay: 0.04 } }).connect(distortionNode);
+    
+    const synthEngine = new Tone.PolySynth(Tone.Synth, {
+        envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.05 }
+    }).connect(distortionNode);
+
+    // Deep 12-Engine Sound Matrix Mapper
+    function runEngineTriggers(padId, targetFreq) {
+        Tone.start();
+        animateLcdScreen();
+
+        const id = parseInt(padId);
+
+        // Standard Chiptune Square Wave Map
+        if (activeEngine === "chiptune") {
+            synthEngine.set({ oscillator: { type: "square" } });
+            synthEngine.triggerAttackRelease(targetFreq, "24n");
+            return;
+        }
+        // Smooth Neon Synthwave Map
+        if (activeEngine === "synthwave") {
+            synthEngine.set({ oscillator: { type: "sawtooth" } });
+            synthEngine.triggerAttackRelease(targetFreq, "12n");
+            return;
+        }
+        // Deep Space Ambient Drone Engine Map
+        if (activeEngine === "ambient") {
+            synthEngine.set({ oscillator: { type: "triangle" } });
+            synthEngine.triggerAttackRelease(Tone.Frequency(targetFreq).toFrequency() / 2, "2n");
+            return;
+        }
+
+        // Modular Trigger Routing Based on Active Kit Select Menu
+        switch(id) {
+            case 16: // Pad 16: Deep Base Elements
+                if (activeEngine === "sublow") drumKick.triggerAttackRelease("E0", "2n");
+                else if (activeEngine === "industrial") drumKick.triggerAttackRelease("F1", "4n");
+                else if (activeEngine === "scifi") synthEngine.triggerAttackRelease("C1", "4n");
+                else drumKick.triggerAttackRelease(activeEngine === "acoustic" ? "F1" : "G1", "8n");
+                break;
+                
+            case 15: // Pad 15: Main Kick Punches
+                drumKick.triggerAttackRelease(activeEngine === "tribal" ? "A1" : "C2", "12n");
+                break;
+                
+            case 14: // Pad 14: Fat Snares
+                if (activeEngine === "glitch") synthEngine.triggerAttackRelease("F#2", "32n");
+                else heavySnare.triggerAttack();
+                break;
+                
+            case 13: // Pad 13: High Snares/Claps
+                heavySnare.triggerAttack();
+                break;
+                
+            case 10: // Pad 10: Closed Hats
+                hihatCymbal.triggerAttackRelease(activeEngine === "metallic" ? 0.01 : 0.04);
+                break;
+                
+            case 9: // Pad 9: Open Hats
+                hihatCymbal.triggerAttackRelease(activeEngine === "metallic" ? 0.3 : 0.18);
+                break;
+
+            default: // Dynamic Pitch Generation fallback for pads 1-8 / 11-12
+                if (activeEngine === "scifi") {
+                    synthEngine.set({ oscillator: { type: "sine" } });
+                    synthEngine.triggerAttackRelease(Tone.Frequency(targetFreq).toFrequency() * 1.5, "16n");
+                } else if (activeEngine === "industrial") {
+                    synthEngine.set({ oscillator: { type: "sawtooth" } });
+                    synthEngine.triggerAttackRelease(targetFreq, "32n");
+                } else {
+                    synthEngine.set({ oscillator: { type: "sine" } });
+                    synthEngine.triggerAttackRelease(targetFreq, "16n");
+                }
+                break;
+        }
+    }
+
+    function animateLcdScreen() {
+        for(let i=1; i<=5; i++) {
+            document.getElementById('b'+i).style.height = (Math.floor(Math.random() * 85) + 15) + '%';
+            setTimeout(() => { document.getElementById('b'+i).style.height = '10%'; }, 120);
+        }
+    }
+
+    // Rotary Dial Gesture Engine Mapping
+    const knobs = document.querySelectorAll('.rotary-knob');
+    knobs.forEach(knob => {
+        let entryY = 0;
+        let rotationalAngle = -135;
+        const knobType = knob.getAttribute('data-type');
+
+        if (knobType === 'bpm') rotationalAngle = ((120 - 60) / (200 - 60)) * 270 - 135;
+        knob.style.transform = `rotate(${rotationalAngle}deg)`;
+
+        const executeSpin = (currentY) => {
+            let movementY = entryY - currentY;
+            entryY = currentY;
+
+            rotationalAngle = Math.min(Math.max(rotationalAngle + (movementY * 1.6), -135), 135);
+            knob.style.transform = `rotate(${rotationalAngle}deg)`;
+
+            let percentageVal = (rotationalAngle + 135) / 270;
+
+            if (knobType === 'bpm') {
+                bpm = Math.round(60 + (percentageVal * 140));
+                Tone.Transport.bpm.value = bpm;
+            } else if (knobType === 'fx') {
+                mainFxDrive = Math.round(percentageVal * 100);
+                distortionNode.distortion = mainFxDrive / 100;
+            }
+            document.getElementById('lcdValueRead').textContent = `BPM: ${bpm} | MIX DRIVE: ${mainFxDrive}%`;
+        };
+
+        knob.addEventListener('touchstart', (e) => {
+            entryY = e.touches[0].clientY;
+            document.getElementById('lcdStatus').textContent = `VAL_TWEAK: ${knobType.toUpperCase()}`;
+        }, { passive: true });
+
+        knob.addEventListener('touchmove', (e) => {
+            executeSpin(e.touches[0].clientY);
+        }, { passive: true });
+
+        knob.addEventListener('touchend', () => {
+            document.getElementById('lcdStatus').textContent = "SYS_STATUS: READY";
+        });
+    });
+
+    // Zero-Latency Multi-Pad Touch Listeners
+    const pads = document.querySelectorAll('.pad');
+    pads.forEach(pad => {
+        const dispatchHit = (e) => {
+            e.preventDefault();
+            pad.classList.add('active-play');
+            setTimeout(() => pad.classList.remove('active-play'), 65);
+            runEngineTriggers(pad.getAttribute('data-id'), pad.getAttribute('data-pitch'));
+        };
+        pad.addEventListener('touchstart', dispatchHit, { passive: false });
+        pad.addEventListener('mousedown', dispatchHit);
+    });
+
+    document.getElementById('kitSelect').addEventListener('change', (e) => {
+        activeEngine = e.target.value;
+        document.getElementById('lcdKitName').textContent = e.target.options[e.target.selectedIndex].text.split(' » ')[1];
+    });
+</script>
+</body>
+</html>
