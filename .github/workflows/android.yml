@@ -11,12 +11,12 @@ jobs:
           node-version: '20'
       - name: Install dependencies
         run: npm install
-      - name: Create Capacitor Config
+      - name: Create Config
         run: echo '{"appId": "com.landos.pad", "appName": "LandosPad", "webDir": "www", "bundledWebRuntime": false}' > capacitor.config.json
-      - name: Build
+      - name: Build and Sync
         run: |
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap add android --no-interactive
+          npx cap add android --no-interactive || echo "Already added"
           npx cap sync
           cd android
           chmod +x gradlew
